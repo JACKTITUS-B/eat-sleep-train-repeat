@@ -1,0 +1,197 @@
+{% extends 'fitness_tracker/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    /* Main layout and filter styles */
+    .period-filter { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
+    .period-filter .btn { background-color: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.2); color: #f0f0f0; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; text-decoration: none; }
+    .period-filter .btn.active { background-color: #4cceac; color: #1a1a1a; font-weight: bold; }
+    .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; padding: 1rem; }
+    .card { background-color: rgba(0, 0, 0, 0.2); border-radius: 10px; padding: 1.5rem; color: #f0f0f0; }
+    .chart-card { grid-column: span 2; }
+    
+    /* KPI card styles */
+    .kpi-card { text-align: center; }
+    .kpi-value { font-size: 2.5rem; font-weight: bold; color: #4cceac; }
+    .kpi-label { font-size: 1rem; color: #a0a0a0; }
+    .kpi-comparison { font-size: 1rem; font-weight: normal; margin-top: 0.5rem; }
+    .positive { color: #4cceac; }
+    .negative { color: #ff6384; }
+    .neutral { color: #a0a0a0; }
+    
+    /* Consistency calendar styles */
+    .consistency-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(20px, 1fr));
+        gap: 4px;
+    }
+    .day-square {
+        width: 100%;
+        padding-bottom: 100%;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+        position: relative;
+    }
+    .day-square.active { background-color: #4cceac; }
+    .day-square .tooltip {
+        visibility: hidden;
+        width: 120px;
+        background-color: #1a1a1a;
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 5px 0;
+        position: absolute;
+        z-index: 1;
+        bottom: 125%;
+        left: 50%;
+        margin-left: -60px;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .day-square:hover .tooltip { visibility: visible; opacity: 1; }
+</style>
+
+    <h1>Welcome, {{ user.username }}!</h1>
+
+    <div class="period-filter">
+        <a href="?period=7days" class="btn {% if selected_period == '7days' %}active{% endif %}">Last 7 Days</a>
+        <a href="?period=week" class="btn {% if selected_period == 'week' %}active{% endif %}">This Week</a>
+        <a href="?period=month" class="btn {% if selected_period == 'month' %}active{% endif %}">This Month</a>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="card kpi-card">
+            <div class="kpi-value">{{ current_stats.total_volume|floatformat:0 }} kg</div>
+            <div class="kpi-label">Total Volume Lifted</div>
+            <div class="kpi-comparison {% if percentage_changes.volume > 0 %}positive{% elif percentage_changes.volume < 0 %}negative{% else %}neutral{% endif %}">
+                {% if percentage_changes.volume > 0 %}&#9650;{% elif percentage_changes.volume < 0 %}&#9660;{% endif %} {{ percentage_changes.volume }}% vs previous period
+            </div>
+        </div>
+        <div class="card kpi-card">
+            <div class="kpi-value">{{ current_stats.workout_count }}</div>
+            <div class="kpi-label">Workouts This Period</div>
+            <div class="kpi-comparison {% if percentage_changes.workouts > 0 %}positive{% elif percentage_changes.workouts < 0 %}negative{% else %}neutral{% endif %}">
+                {% if percentage_changes.workouts > 0 %}&#9650;{% elif percentage_changes.workouts < 0 %}&#9660;{% endif %} {{ percentage_changes.workouts }}% vs previous period
+            </div>
+        </div>
+        <div class="card kpi-card">
+            <div class="kpi-value">{{ current_stats.heaviest_lift|floatformat:0 }} kg</div>
+            <div class="kpi-label">Heaviest Lift This Period</div>
+            <div class="kpi-comparison {% if percentage_changes.heaviest_lift > 0 %}positive{% elif percentage_changes.heaviest_lift < 0 %}negative{% else %}neutral{% endif %}">
+                {% if percentage_changes.heaviest_lift > 0 %}&#9650;{% elif percentage_changes.heaviest_lift < 0 %}&#9660;{% endif %} {{ percentage_changes.heaviest_lift }}% vs previous period
+            </div>
+        </div>
+
+        <div class="card chart-card">
+            <h3>Workout Consistency (Last 90 Days)</h3>
+            <div id="consistencyCalendar" class="consistency-grid"></div>
+        </div>
+
+        <div class="card chart-card">
+            <h3>Muscle Group Balance</h3>
+            {% if muscle_labels %}
+                <canvas id="muscleBalanceChart"></canvas>
+            {% else %}
+                <p style="text-align: center; color: #a0a0a0;">Log some workouts to see your muscle balance.</p>
+            {% endif %}
+        </div>
+        
+        <div class="card chart-card">
+            <h3>Daily Volume (kg)</h3>
+            {% if daily_volume_labels %}
+                <canvas id="dailyVolumeChart"></canvas>
+            {% else %}
+                <p style="text-align: center; color: #a0a0a0;">No workouts logged in this period.</p>
+            {% endif %}
+        </div>
+    </div>
+
+ <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // --- 1. MUSCLE BALANCE DONUT CHART ---
+    var muscleLabels = {{ muscle_labels|safe }};
+    var muscleData = {{ muscle_data|safe }};
+
+    if (muscleLabels && muscleLabels.length > 0) {
+        var ctxDoughnut = document.getElementById('muscleBalanceChart').getContext('2d');
+        var doughnutChart = new Chart(ctxDoughnut, {
+            type: 'doughnut',
+            data: {
+                labels: muscleLabels,
+                datasets: [{
+                    label: 'Sets per Muscle Group',
+                    data: muscleData,
+                    backgroundColor: ['rgba(255, 99, 132, 0.7)','rgba(54, 162, 235, 0.7)','rgba(255, 206, 86, 0.7)','rgba(75, 192, 192, 0.7)','rgba(153, 102, 255, 0.7)','rgba(255, 159, 64, 0.7)','rgba(12, 186, 12, 0.7)','rgba(255, 125, 20, 0.7)','rgba(201, 203, 207, 0.7)','rgba(245, 155, 192, 0.7)','rgba(186, 82, 162, 0.7)'],
+                }]
+            },
+            options: {
+                legend: { labels: { fontColor: '#f0f0f0' } }
+            }
+        });
+    }
+
+    // --- 2. DAILY VOLUME BAR CHART ---
+    var dailyVolumeLabels = {{ daily_volume_labels|safe }};
+    var dailyVolumeData = {{ daily_volume_data|safe }};
+
+    if (dailyVolumeLabels && dailyVolumeLabels.length > 0) {
+        var ctxBar = document.getElementById('dailyVolumeChart').getContext('2d');
+        var barChart = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: dailyVolumeLabels,
+                datasets: [{
+                    label: 'Total Volume (kg)',
+                    data: dailyVolumeData,
+                    backgroundColor: 'rgba(121, 224, 196, 0.6)', // Lighter teal color
+                    borderColor: 'rgba(121, 224, 196, 1)',
+                    borderWidth: 1,
+                    barPercentage: 0.3,
+                    categoryPercentage: 0.6// Thinner bars
+                }]
+            },
+            options: {
+                legend: { display: false },
+                scales: { 
+                    yAxes: [{ ticks: { beginAtZero: true, fontColor: '#a0a0a0' } }],
+                    xAxes: [{ ticks: { fontColor: '#a0a0a0' } }]
+                }
+            }
+        });
+    }
+
+    // --- 3. WORKOUT CONSISTENCY CALENDAR ---
+    const calendarContainer = document.getElementById('consistencyCalendar');
+    if (calendarContainer) {
+        const workoutDates = new Set({{ consistency_dates|safe }});
+        const today = new Date();
+        const daysToShow = 90;
+
+        for (let i = daysToShow - 1; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(today.getDate() - i);
+            const dateString = date.toISOString().split('T')[0];
+            
+            const daySquare = document.createElement('div');
+            daySquare.classList.add('day-square');
+            
+            if (workoutDates.has(dateString)) {
+                daySquare.classList.add('active');
+            }
+
+            const tooltip = document.createElement('span');
+            tooltip.classList.add('tooltip');
+            tooltip.textContent = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            daySquare.appendChild(tooltip);
+
+            calendarContainer.appendChild(daySquare);
+        }
+    }
+});
+</script>
+{% endblock %}

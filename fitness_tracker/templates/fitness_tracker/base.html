@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eat-Sleep-Train-Repeat - {% block title %}{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+
+
+    <style>
+        :root {
+            --bg-gradient-start: #56a9a2ff;
+            --bg-gradient-end: #040505ff;
+            --text-primary: #f0f0f0;
+            --text-secondary: #7da8bdff;
+            --accent-color: #eafd5bff;
+            --nav-link-color: rgba(252, 251, 247, 0.8);
+            /* NEW: A sleek, futuristic font for the brand */
+            --font-brand: 'Exo 2', sans-serif;
+        }
+
+        /* --- CSS KEYFRAMES FOR THE ANIMATION --- */
+        @keyframes aurora-shimmer {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            background-color: #b2d1cbff; /* Fallback color */
+            background-image: linear-gradient(to top right, var(--bg-gradient-start), var(--bg-gradient-end));
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 4rem; /* More space for the prominent title */
+            padding: 20px 0; /* A bit more padding to let the title breathe */
+            margin-bottom: 2rem;
+        }
+
+        /* --- THE ANIMATED AURORA BRAND --- */
+        .nav-brand a {
+            font-family: var(--font-brand);
+            font-weight: 700;
+            font-size: 32px; /* Larger for more impact */
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            
+            /* The gradient that will be animated */
+            background: linear-gradient(
+                90deg, 
+                var(--text-secondary), 
+                #fff, 
+                var(--accent-color), 
+                var(--text-secondary)
+            );
+            
+            /* Critical properties for the effect */
+            background-size: 300% 100%; /* Gradient is 3x wider than the text */
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            
+            /* Applying the animation */
+            animation: aurora-shimmer 10s linear infinite;
+        }
+
+        /* --- NAVIGATION LINKS --- */
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+        .nav-links a {
+            font-family: 'Inter', sans-serif;
+            color: var(--nav-link-color);
+            text-decoration: none;
+            padding: 8px 12px;
+            font-weight: 500;
+            font-size: 15px;
+            border-radius: 6px;
+            transition: color 0.3s, background-color 0.3s;
+            backdrop-filter: blur(5px); /* Adds a subtle frosted glass effect */
+        }
+        .nav-links a:hover {
+            color: #fff;
+            background-color: rgba(234, 127, 50, 0.8);
+        }
+
+        h1, h2 {
+            color: var(--text-secondary);
+        }
+
+        .content {
+           padding-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <div class="nav-brand">
+                <a href="{% url 'dashboard' %}">Eat Sleep Train Repeat</a>
+            </div>
+            <div class="nav-links">
+                <a href="{% url 'dashboard' %}">Dashboard</a>
+                <a href="{% url 'log_workout' %}">Log Workout</a>
+                <a href="{% url 'heatmap' %}">Heatmap</a>
+                <a href="{% url 'profile_setup' %}">Profile</a>
+                <a href="{% url 'ai_suggestion' %}">AI Suggestion</a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'logout' %}">Logout</a>
+                {% else %}
+                    <a href="{% url 'login' %}">Login</a>
+                    <a href="{% url 'register' %}">Register</a>
+                {% endif %}
+            </div>
+        </nav>
+        <div class="content">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+</body>
+</html>

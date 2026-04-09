@@ -1,0 +1,60 @@
+{% extends 'fitness_tracker/base.html' %}
+{% load static %}
+
+{% block title %}Create Account{% endblock %}
+
+{% block content %}
+<style>
+    .form-container { max-width: 500px; margin: auto; }
+    .form-field { margin-bottom: 1rem; }
+    .form-field label { display: block; color: #a0a0a0; margin-bottom: 0.5rem; }
+    .form-field input {
+        width: 100%;
+        padding: 0.75rem;
+        background-color: #2d3748;
+        color: #f0f0f0;
+        border: 1px solid #4a5568;
+        border-radius: 8px;
+    }
+    .form-btn { background-color: #4cceac; color: #1a1a1a; font-weight: bold; padding: 0.75rem 1.5rem; border-radius: 8px; border: none; cursor: pointer; transition: background-color 0.3s; width: 100%; font-size: 1rem; }
+    
+    /* --- NEW: Styles for error messages --- */
+    .error-message {
+        color: #ff6384; /* Red for errors */
+        font-size: 0.9rem;
+        margin-top: 0.25rem;
+    }
+</style>
+
+<div class="card form-container">
+    <h1 class="text-3xl font-bold mb-6 text-white text-center">Create Account</h1>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            {% for error in form.non_field_errors %}
+                <p class="error-message text-center mb-4">{{ error }}</p>
+            {% endfor %}
+        {% endif %}
+
+        {% for field in form %}
+            <div class="form-field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                        <p class="error-message">{{ error }}</p>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        {% endfor %}
+        
+        <button type="submit" class="form-btn mt-4">Register</button>
+    </form>
+    
+    <p class="text-center mt-4 text-gray-400">
+        Already have an account? <a href="{% url 'login' %}" class="text-teal-400 hover:underline">Log In</a>
+    </p>
+</div>
+{% endblock %}

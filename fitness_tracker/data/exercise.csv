@@ -1,0 +1,68 @@
+
+Barbell Bench Press,chest
+Incline Barbell Press,chest
+Decline Barbell Press,chest
+Dumbbell Bench Press,chest
+Incline Dumbbell Press,chest
+Dumbbell Flyes,chest
+Incline Dumbbell Flyes,chest
+Cable Crossover,chest
+Pec Deck Machine,chest
+Push-Up,chest
+Dip,chest
+Pull-Up,back
+Chin-Up,back
+Lat Pulldown,back
+Barbell Bent-Over Row,back
+T-Bar Row,back
+Seated Cable Row,back
+
+Back Extension,back
+Overhead Press,front_delt
+Arnold Press,front_delt
+Dumbbell Front Raise,front_delt
+Dumbbell Lateral Raise,side_delt
+Cable Lateral Raise,side_delt
+Face Pull,rear_delt
+Barbell Shrug,traps
+Dumbbell Shrug,traps
+Barbell Curl,biceps
+Dumbbell Curl,biceps
+Hammer Curl,biceps
+Preacher Curl,biceps
+Cable Curl,biceps
+Concentration Curl,biceps
+Close-Grip Bench Press,triceps
+Triceps Pushdown,triceps
+Overhead Triceps Extension,triceps
+Skull Crusher,triceps
+Bench Dip,triceps
+Rope Pushdown,triceps
+Dumbbell Row,forearms
+Wrist Curl,forearms
+Reverse Wrist Curl,forearms
+Farmer's Walk,forearms
+Crunch,abs
+Leg Raise,abs
+Hanging Leg Raise,abs
+Plank,abs
+Russian Twist,abs
+Cable Crunch,abs
+Ab Roller,abs
+Barbell Back Squat,quads;glutes;hams
+Front Squat,quads;glutes
+Deadlift,back;hams;glutes
+Leg Press,quads
+Lunge,quads
+Bulgarian Split Squat,quads
+Leg Extension,quads
+Goblet Squat,quads
+Romanian Deadlift,hams
+Stiff-Legged Deadlift,hams
+Lying Leg Curl,hams
+Seated Leg Curl,hams
+Good Morning,hams
+Glute-Ham Raise,hams
+Standing Calf Raise,calves
+Seated Calf Raise,calves
+Leg Press Calf Raise,calves

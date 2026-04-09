@@ -1,0 +1,147 @@
+{% extends 'fitness_tracker/base.html' %}
+{% load static %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+
+<style>
+    /* New container for the background image */
+    .background-container {
+        position: fixed; /* Fixes it to the screen */
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        /* --- IMPORTANT: Update this with the path to your image --- */
+        background-image: url("{% static 'fitness_tracker/images/your_background_image.jpg' %}");
+        background-size: cover;
+        background-position: center;
+        filter: brightness(0.4); /* Darkens the image so the form stands out */
+        z-index: -1; /* Pushes it behind all other content */
+    }
+
+    .login-container {
+        max-width: 420px;
+        margin: 8vh auto; /* Pushes the form down from the top */
+        padding: 40px;
+        /* Semi-transparent black for the "card" effect */
+        background-color: rgba(17, 17, 17, 0.9); 
+        border-radius: 12px;
+        border: 1px solid #334155;
+    }
+
+    .login-container h1 {
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 28px;
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    /* Styling for the teal label boxes */
+    .login-container label {
+        display: inline-block;
+        margin-bottom: 10px;
+        font-weight: 500;
+        color: #0d0d0d; /* Dark text for contrast on the teal */
+        font-size: 14px;
+        background-color: #2dd4bf; /* Teal color */
+        padding: 8px 12px;
+        border-radius: 6px;
+    }
+
+    /* Underline style for the input fields */
+    .login-container input[type="text"],
+    .login-container input[type="password"] {
+        width: 100%;
+        padding: 10px 2px;
+        background: transparent;
+        color: #e2e8f0;
+        border: none;
+        border-radius: 0;
+        border-bottom: 2px solid #4a5568;
+        box-sizing: border-box;
+        margin-bottom: 25px;
+        transition: border-color 0.3s;
+    }
+    .login-container input:focus {
+        outline: none;
+        border-bottom-color: #2dd4bf; /* Teal focus color */
+    }
+
+    .login-container button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background-color: #2dd4bf; /* Teal button */
+        color: #0d0d0d; /* Dark text */
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.2s;
+    }
+    .login-container button:hover {
+        background-color: #26bba7; /* Slightly darker teal on hover */
+        transform: translateY(-2px);
+    }
+    
+    /* Styles for Django's form errors */
+    .errorlist {
+        list-style-type: none;
+        padding: 10px;
+        margin: 0 0 15px 0;
+        color: #f87171;
+        background-color: rgba(153, 27, 27, 0.3);
+        border: 1px solid #ef4444;
+        border-radius: 6px;
+    }
+
+    /* Styles for the "Don't have an account?" link */
+    .register-link {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 14px;
+    }
+    .register-link a {
+        color: #2dd4bf;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .register-link a:hover {
+        text-decoration: underline;
+    }
+
+</style>
+
+<div class="background-container"></div>
+
+<div class="login-container">
+    <h1>Login</h1>
+    <form method="post">
+        {% csrf_token %}
+        
+        {{ form.non_field_errors }}
+
+        <div class="field-wrapper">
+            <label for="{{ form.username.id_for_label }}">Username</label>
+            {{ form.username }}
+            {{ form.username.errors }}
+        </div>
+
+        <div class="field-wrapper">
+            <label for="{{ form.password.id_for_label }}">Password</label>
+            {{ form.password }}
+            {{ form.password.errors }}
+        </div>
+        
+        <button type="submit">Login</button>
+    </form>
+    
+    <p class="register-link">
+        Don't have an account? <a href="{% url 'register' %}">Sign Up</a>
+    </p>
+</div>
+
+{% endblock %}

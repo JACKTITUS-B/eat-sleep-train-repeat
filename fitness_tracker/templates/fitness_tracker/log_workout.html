@@ -1,0 +1,247 @@
+{% extends 'fitness_tracker/base.html' %}
+
+{% load static %}
+
+
+
+{% block title %}Log Workout{% endblock %}
+
+
+
+{% block content %}
+
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
+
+
+
+<style>
+
+    .form-container {
+
+        max-width: 450px;
+
+        margin: 40px auto;
+
+        padding: 40px;
+
+        /* --- UPDATED: Black background for the form --- */
+
+        background-color: #000000ff;
+
+        border-radius: 12px;
+
+        border: 1px solid #4a5568;
+
+    }
+
+
+
+    .form-container h1 {
+
+        text-align: center;
+
+        margin-bottom: 30px;
+
+        font-size: 24px;
+
+        font-weight: 700;
+
+        color: #fdfcfbff;
+
+    }
+
+
+
+    /* --- UPDATED: Light grey box for labels --- */
+
+    .form-container label {
+
+        display: inline-block; /* Allows the box to fit the text */
+
+        margin-bottom: 10px;
+
+        font-weight: 500;
+
+        color: #101010ff;
+
+        font-size: 14px;
+
+        background-color: #0fa79dff; /* Light grey background */
+
+        padding: 8px 12px;
+
+        border-radius: 6px;
+
+    }
+
+
+
+    .form-container input[type="text"],
+
+    .form-container input[type="number"],
+
+    .form-container textarea,
+
+    .ts-control {
+
+        width: 100%;
+
+        padding: 10px 2px;
+
+        background: transparent;
+
+        color: #e2e8f0;
+
+        border: none;
+
+        border-radius: 0;
+
+        border-bottom: 2px solid #4a5568;
+
+        box-sizing: border-box;
+
+        margin-bottom: 25px;
+
+        transition: border-color 0.3s;
+
+    }
+
+
+
+    .form-container input:focus,
+
+    .form-container textarea:focus,
+
+    .ts-control.focus {
+
+        outline: none;
+
+        border-bottom-color: #ff6a00; /* Orange focus color */
+
+    }
+
+
+
+    .ts-dropdown {
+
+        background: #2d3748;
+
+        border: 1px solid #4a5568;
+
+        border-radius: 6px;
+
+        color: #e2e8f0;
+
+    }
+
+    .ts-dropdown .option:hover {
+
+        background: #ff6a00;
+
+        color: #000000;
+
+    }
+
+
+
+    /* --- UPDATED: Orange button with black text --- */
+
+    .form-container button {
+
+        width: 100%;
+
+        padding: 12px;
+
+        border: none;
+
+        border-radius: 8px;
+
+        background-color: #f1750fff; /* Vibrant Orange */
+
+        color: #efeaeaff; /* Black text */
+
+        font-size: 16px;
+
+        font-weight: bold;
+
+        cursor: pointer;
+
+        transition: background-color 0.3s, transform 0.2s;
+
+    }
+
+
+
+    .form-container button:hover {
+
+        background-color: #e05e00; /* Darker orange on hover */
+
+        transform: translateY(-2px);
+
+    }
+
+</style>
+
+
+
+<div class="form-container">
+
+    <h1>Log Today's Workout</h1>
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        <label for="workout_name">Workout Name</label>
+
+        <input type="text" id="workout_name" name="workout_name" required>
+
+       
+
+        <label for="sets">Sets</label>
+
+        <input type="number" id="sets" name="sets" min="1" required>
+
+
+
+        <label for="reps">Reps</label>
+
+        <input type="number" id="reps" name="reps" min="1" required>
+
+
+
+        <label for="weight">Weight (kg)</label>
+
+        <input type="number" id="weight" name="weight" min="0" step="0.25" required>
+
+       
+
+        <label for="notes">Notes</label>
+
+        <textarea id="notes" name="notes" rows="3"></textarea>
+
+       
+
+        <button type="submit">Log Workout</button>
+
+    </form>
+
+</div>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const exerciseNames = JSON.parse('{{ exercise_names_json|escapejs }}');
+        const options = exerciseNames.map(name => ({ value: name, text: name }));
+        
+        new TomSelect('#workout_name', {
+            create: true, // Allows user to add a new exercise not in the list
+            sortField: { field: "text", direction: "asc" },
+            options: options
+        });
+    });
+</script>
+
+{% endblock %}

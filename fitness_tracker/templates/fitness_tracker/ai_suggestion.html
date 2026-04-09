@@ -1,0 +1,163 @@
+{% extends 'fitness_tracker/base.html' %}
+{% load static %}
+{% block title %}AI Suggestion{% endblock %}
+
+{% block content %}
+<style>
+    /* Your existing CSS styles go here */
+    .card { background-color: rgba(0, 0, 0, 0.2); border-radius: 10px; padding: 1.5rem; color: #f0f0f0; }
+    .chat-container { display: flex; flex-direction: column; height: 70vh; }
+    .chat-window { flex-grow: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+    .chat-message { display: flex; gap: 0.75rem; max-width: 80%; }
+    .chat-bubble { padding: 0.75rem 1rem; border-radius: 15px; color: #f0f0f0; }
+    .ai-message { align-self: flex-start; }
+    .ai-message .chat-bubble { background-color: rgba(255, 255, 255, 0.1); border-top-left-radius: 0; }
+    .user-message { align-self: flex-end; }
+    .user-message .chat-bubble { background-color: #4cceac; color: #1a1a1a; font-weight: 500; border-top-right-radius: 0; }
+    .chat-avatar { width: 40px; height: 40px; border-radius: 50%; background-color: rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+    .chat-input-bar { display: flex; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.1); align-items: center; }
+    #user_prompt { flex-grow: 1; background-color: #2d3748; color: #f0f0f0; border: 1px solid #4a5568; border-radius: 8px; padding: 0.75rem; min-height: 50px; resize: none; outline: none; transition: border-color 0.3s, box-shadow 0.3s; }
+    #user_prompt:focus { border-color: #4cceac; box-shadow: 0 0 0 2px rgba(76, 206, 172, 0.5); }
+    #ai-suggestion-button { background-color: #4cceac; color: #1a1a1a; font-weight: bold; padding: 0.75rem 1.5rem; border-radius: 8px; border: none; cursor: pointer; transition: background-color 0.3s; height: 50px; }
+    #ai-suggestion-button:hover { background-color: #3ca98b; }
+    #ai-suggestion-button:disabled { background-color: #4a5568; cursor: not-allowed; }
+    #ai-typing-indicator span { height: 8px; width: 8px; margin: 0 2px; background-color: #a0a0a0; border-radius: 50%; display: inline-block; animation: pulse 1.4s infinite ease-in-out both; }
+    #ai-typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+    #ai-typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes pulse { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
+</style>
+
+<div class="card w-full max-w-3xl mx-auto">
+    <div class="chat-container">
+        <div class="chat-window" id="chat-window">
+            </div>
+        <form id="ai-suggestion-form" action="{% url 'ai_suggestion' %}" method="post" class="chat-input-bar">
+            {% csrf_token %}
+            <textarea name="user_prompt" id="user_prompt" rows="1" placeholder="Ask a question or leave blank..."></textarea>
+            <button type="submit" id="ai-suggestion-button">Generate</button>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('ai-suggestion-form');
+    const submitButton = document.getElementById('ai-suggestion-button');
+    const chatWindow = document.getElementById('chat-window');
+    const userPromptTextarea = document.getElementById('user_prompt');
+
+    // Key for localStorage, make it unique per user if possible (e.g., 'chat_history_{{ user.id }}')
+    // For now, using a generic key. If you have user.id in template, use it: `chat_history_{{ user.id }}`
+    const CHAT_HISTORY_KEY = `chat_history_{{ user.id }}`; // Using user.id makes it unique per user
+
+    let chatMessages = []; // Array to hold message objects
+
+    // Helper function to render a message into the DOM
+    function renderMessageToDOM(message) {
+        const messageWrapper = document.createElement('div');
+        messageWrapper.className = `chat-message ${message.type}`;
+        
+        const avatar = document.createElement('div');
+        avatar.className = 'chat-avatar';
+        avatar.textContent = (message.type === 'user-message') ? 'You' : 'AI';
+        
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble prose prose-invert max-w-none';
+        // Use marked.parse only for AI messages, or if content is markdown
+        bubble.innerHTML = message.type === 'ai-message' ? marked.parse(message.content) : message.content;
+        
+        if (message.type === 'ai-message') {
+            messageWrapper.appendChild(avatar);
+        }
+        messageWrapper.appendChild(bubble);
+        if (message.type === 'user-message') {
+            messageWrapper.appendChild(avatar);
+        }
+        
+        chatWindow.appendChild(messageWrapper);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+        return messageWrapper;
+    }
+
+    // Function to append a message to the chat and save to storage
+    function appendAndSaveMessage(content, type) {
+        const message = { content: content, type: type };
+        chatMessages.push(message);
+        localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(chatMessages));
+        return renderMessageToDOM(message); // Render the message to the DOM
+    }
+
+    // Function to load history from localStorage
+    function loadChatHistory() {
+        const storedHistory = localStorage.getItem(CHAT_HISTORY_KEY);
+        if (storedHistory) {
+            try {
+                chatMessages = JSON.parse(storedHistory);
+                chatMessages.forEach(message => renderMessageToDOM(message));
+                // Remove the initial AI message if history is loaded, it will be duplicated otherwise
+                // We'll manage initial message below based on history
+            } catch (e) {
+                console.error("Failed to parse chat history from localStorage", e);
+                chatMessages = []; // Reset on error
+            }
+        }
+
+        // If no history or parsing failed, add the initial AI greeting
+        if (chatMessages.length === 0) {
+            const initialGreeting = `<p>Hello, {{ user.username }}! I'm your AI fitness assistant.</p><p class="mt-2">Ask me a fitness question, or click "Generate" for a workout suggestion based on your history.</p>`;
+            appendAndSaveMessage(initialGreeting, 'ai-message');
+        }
+    }
+
+    // --- INITIALIZATION ---
+    loadChatHistory(); // Load history when the page loads
+
+    form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        
+        const userPrompt = userPromptTextarea.value.trim();
+        const formData = new FormData(form);
+
+        if (userPrompt) {
+            appendAndSaveMessage(userPrompt, 'user-message'); // Use new function
+        }
+
+        const typingIndicator = appendAndSaveMessage('<div id="ai-typing-indicator"><span></span><span></span><span></span></div>', 'ai-message'); // Use new function
+        submitButton.disabled = true;
+        submitButton.textContent = '...';
+        userPromptTextarea.value = '';
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Find and remove the typing indicator from the DOM and from chatMessages array
+            typingIndicator.remove();
+            chatMessages = chatMessages.filter(msg => msg.content !== '<div id="ai-typing-indicator"><span></span><span></span><span></span></div>');
+            
+            if (data.suggestion) {
+                appendAndSaveMessage(data.suggestion, 'ai-message'); // Use new function
+            } else {
+                appendAndSaveMessage('<p class="text-red-500">Sorry, an error occurred.</p>', 'ai-message'); // Use new function
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            typingIndicator.remove();
+            chatMessages = chatMessages.filter(msg => msg.content !== '<div id="ai-typing-indicator"><span></span><span></span><span></span></div>'); // Also remove indicator from array on error
+            appendAndSaveMessage('<p class="text-red-500">Sorry, an unexpected error occurred.</p>', 'ai-message'); // Use new function
+        })
+        .finally(() => {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Generate';
+        });
+    });
+
+    // Original appendMessage function is now replaced by renderMessageToDOM and appendAndSaveMessage
+    // You can remove the original `function appendMessage(content, type)` definition if you wish.
+});
+</script>
+{% endblock %}

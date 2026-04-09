@@ -1,0 +1,71 @@
+{% extends 'fitness_tracker/base.html' %}
+{% block title %}Your Profile{% endblock %}
+
+{% block content %}
+<style>
+    .profile-container { max-width: 600px; margin: auto; position: relative; }
+    .form-field { margin-bottom: 1.5rem; }
+    .form-field label { display: block; color: #a0a0a0; margin-bottom: 0.5rem; }
+    .form-field select, .form-field input { width: 100%; padding: 0.75rem; background-color: #2d3748; color: #f0f0f0; border: 1px solid #4a5568; border-radius: 8px; }
+    .form-btn { background-color: #4cceac; color: #1a1a1a; font-weight: bold; padding: 0.75rem 1.5rem; border-radius: 8px; border: none; cursor: pointer; transition: background-color 0.3s; width: 100%; }
+    
+    /* Styles for the summary view */
+    .summary-item { display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+    .summary-item:last-child { border-bottom: none; }
+    .summary-label { color: #a0a0a0; }
+    .summary-value { color: #ffffff; font-weight: 500; }
+    .edit-btn { position: absolute; top: 1.5rem; right: 1.5rem; color: #4cceac; text-decoration: none; font-weight: bold; }
+</style>
+
+<div class="card profile-container">
+    
+    {% if show_form %}
+        <h1 class="text-3xl font-bold mb-4 text-white">
+            {% if profile.goal %}Update Your Profile{% else %}Welcome! Let's Set Up Your Profile{% endif %}
+        </h1>
+        <p class="mb-6 text-gray-300">This will help us personalize your experience.</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-field">
+                <label for="{{ form.goal.id_for_label }}">What is your primary goal?</label>
+                {{ form.goal }}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.training_style.id_for_label }}">What is your training style?</label>
+                {{ form.training_style }}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.height.id_for_label }}">Height (cm)</label>
+                {{ form.height }}
+            </div>
+            <div class="form-field">
+                <label for="{{ form.weight.id_for_label }}">Weight (kg)</label>
+                {{ form.weight }}
+            </div>
+            <button type="submit" class="form-btn">Save Changes</button>
+        </form>
+
+    {% else %}
+        <h1 class="text-3xl font-bold mb-6 text-white">Your Profile</h1>
+        <a href="?edit=true" class="edit-btn">Edit</a>
+
+        <div class="summary-item">
+            <span class="summary-label">Primary Goal</span>
+            <span class="summary-value">{{ profile.get_goal_display }}</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">Training Style</span>
+            <span class="summary-value">{{ profile.get_training_style_display }}</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">Height</span>
+            <span class="summary-value">{{ profile.height }} cm</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">Weight</span>
+            <span class="summary-value">{{ profile.weight }} kg</span>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
