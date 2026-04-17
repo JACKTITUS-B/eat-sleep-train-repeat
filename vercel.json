@@ -1,14 +1,14 @@
 {
   "builds": [
     {
-      "src": "project_name/wsgi.py",
+      "src": "your_project_name/wsgi.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "project_name/wsgi.py"
+      "dest": "eat_sleep_train_repeat/wsgi.py"
     }
   ]
 }
